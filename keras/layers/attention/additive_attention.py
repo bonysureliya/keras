@@ -24,6 +24,7 @@ import tensorflow.compat.v2 as tf
 from keras.layers.attention.base_dense_attention import BaseDenseAttention
 
 # isort: off
+from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.util.tf_export import keras_export
 
 
@@ -48,10 +49,6 @@ class AdditiveAttention(BaseDenseAttention):
     Args:
       use_scale: If `True`, will create a variable to scale the attention
         scores.
-      causal: Boolean. Set to `True` for decoder self-attention. Adds a mask
-        such that position `i` cannot attend to positions `j > i`. This prevents
-        the flow of information from the future towards the past.  Defaults to
-        `False`.
       dropout: Float between 0 and 1. Fraction of the units to drop for the
         attention scores. Defaults to 0.0.
 
@@ -74,6 +71,10 @@ class AdditiveAttention(BaseDenseAttention):
         training mode (adding dropout) or in inference mode (no dropout).
       return_attention_scores: bool, it `True`, returns the attention scores
         (after masking and softmax) as an additional output argument.
+      use_causal_mask: Boolean. Set to `True` for decoder self-attention. Adds a
+        mask such that position `i` cannot attend to positions `j > i`. This
+        prevents the flow of information from the future towards the past.
+        Defaults to `False`.`
 
     Output:
 
@@ -133,6 +134,14 @@ class AdditiveAttention(BaseDenseAttention):
     """
 
     def __init__(self, use_scale=True, **kwargs):
+        # Deprecated field `causal` determines whether to using causal masking.
+        # Use `use_causal_mask` in call() method instead.
+        if "causal" in kwargs:
+            self.causal = kwargs.pop("causal")
+            logging.warning(
+                "`causal` argument is deprecated. Please use `use_causal_mask` "
+                "in call() method to specify causal masking."
+            )
         super().__init__(**kwargs)
         self.use_scale = use_scale
 

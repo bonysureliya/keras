@@ -24,6 +24,7 @@ import tensorflow.compat.v2 as tf
 from keras.layers.attention.base_dense_attention import BaseDenseAttention
 
 # isort: off
+from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.util.tf_export import keras_export
 
 
@@ -46,10 +47,6 @@ class Attention(BaseDenseAttention):
     Args:
       use_scale: If `True`, will create a scalar variable to scale the attention
         scores.
-      causal: Boolean. Set to `True` for decoder self-attention. Adds a mask
-        such that position `i` cannot attend to positions `j > i`. This prevents
-        the flow of information from the future towards the past.  Defaults to
-        `False`.
       dropout: Float between 0 and 1. Fraction of the units to drop for the
         attention scores. Defaults to 0.0.
       score_mode: Function to use to compute attention scores, one of
@@ -76,6 +73,10 @@ class Attention(BaseDenseAttention):
         (after masking and softmax) as an additional output argument.
       training: Python boolean indicating whether the layer should behave in
         training mode (adding dropout) or in inference mode (no dropout).
+      use_causal_mask: Boolean. Set to `True` for decoder self-attention. Adds a
+        mask such that position `i` cannot attend to positions `j > i`. This
+        prevents the flow of information from the future towards the past.
+        Defaults to `False`.
 
     Output:
 
@@ -134,6 +135,14 @@ class Attention(BaseDenseAttention):
     """
 
     def __init__(self, use_scale=False, score_mode="dot", **kwargs):
+        # Deprecated field `causal` determines whether to using causal masking.
+        # Use `use_causal_mask` in call() method instead.
+        if "causal" in kwargs:
+            self.causal = kwargs.pop("causal")
+            logging.warning(
+                "`causal` argument is deprecated. Please use `use_causal_mask` "
+                "in call() method to specify causal masking."
+            )
         super().__init__(**kwargs)
         self.use_scale = use_scale
         self.score_mode = score_mode
